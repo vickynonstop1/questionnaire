@@ -27,19 +27,19 @@
     <!-- 歡迎頁面 -->
     <div id="welcome-screen" class="text-center py-20 bg-white rounded-3xl shadow-xl px-6 relative">
         <h1 class="text-4xl font-bold text-indigo-900 mb-6">婚姻價值觀對比測試</h1>
-        <p class="text-lg text-gray-600 mb-10 leading-relaxed">這是一份深度共識指南，模仿 16Personalities 形式。<br>請分別由「你」與「伴侶」填寫，系統將分析兩人的分歧點。</p>
+        <p class="text-lg text-gray-600 mb-10 leading-relaxed">「婚姻價值觀對比測試：找尋心靈共鳴」<br>請分別由「你」與「伴侶」填寫，系統將分析兩人的分歧點。</p>
         
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
             <div class="relative">
                 <button onclick="startTest('user')" class="w-full bg-indigo-600 text-white py-6 rounded-2xl text-xl font-bold hover:bg-indigo-700 transition shadow-lg">
-                    我是自己 (User) 
+                    自己 
                     <span id="status-user" class="block text-sm font-normal mt-1 text-indigo-200">未完成</span>
                 </button>
                 <span id="update-time-user" class="absolute -bottom-6 right-2 text-[10px] text-gray-400 font-medium"></span>
             </div>
             <div class="relative">
                 <button onclick="startTest('partner')" class="w-full bg-teal-600 text-white py-6 rounded-2xl text-xl font-bold hover:bg-teal-700 transition shadow-lg">
-                    我是伴侶 (Partner) 
+                    伴侶 
                     <span id="status-partner" class="block text-sm font-normal mt-1 text-teal-200">未完成</span>
                 </button>
                 <span id="update-time-partner" class="absolute -bottom-6 right-2 text-[10px] text-gray-400 font-medium"></span>
@@ -556,4 +556,5 @@
 
 </script>
 </body>
+
 </html>
