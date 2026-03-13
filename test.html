@@ -1,0 +1,559 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>婚姻價值觀對比測試 - 找尋心靈共鳴</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&display=swap');
+        body { font-family: 'Noto Sans TC', sans-serif; background-color: #f3f7f9; }
+        .option-dot { transition: all 0.2s ease; cursor: pointer; }
+        .option-dot:hover { transform: scale(1.2); }
+        .active-1 { background-color: #88619a !important; border-color: #88619a !important; }
+        .active-2 { background-color: #af8eb5 !important; border-color: #af8eb5 !important; }
+        .active-3 { background-color: #cbd5e0 !important; border-color: #cbd5e0 !important; }
+        .active-4 { background-color: #88b194 !important; border-color: #88b194 !important; }
+        .active-5 { background-color: #33a474 !important; border-color: #33a474 !important; }
+        .progress-bar { transition: width 0.5s ease; }
+        .page-dot { cursor: pointer; transition: all 0.2s; }
+        .page-dot.active { background-color: #4f46e5; color: white; border-color: #4f46e5; }
+    </style>
+</head>
+<body class="text-gray-800">
+
+<div id="app" class="max-w-4xl mx-auto px-4 py-8">
+    <!-- 歡迎頁面 -->
+    <div id="welcome-screen" class="text-center py-20 bg-white rounded-3xl shadow-xl px-6 relative">
+        <h1 class="text-4xl font-bold text-indigo-900 mb-6">婚姻價值觀對比測試</h1>
+        <p class="text-lg text-gray-600 mb-10 leading-relaxed">這是一份深度共識指南，模仿 16Personalities 形式。<br>請分別由「你」與「伴侶」填寫，系統將分析兩人的分歧點。</p>
+        
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6 max-w-2xl mx-auto">
+            <div class="relative">
+                <button onclick="startTest('user')" class="w-full bg-indigo-600 text-white py-6 rounded-2xl text-xl font-bold hover:bg-indigo-700 transition shadow-lg">
+                    我是自己 (User) 
+                    <span id="status-user" class="block text-sm font-normal mt-1 text-indigo-200">未完成</span>
+                </button>
+                <span id="update-time-user" class="absolute -bottom-6 right-2 text-[10px] text-gray-400 font-medium"></span>
+            </div>
+            <div class="relative">
+                <button onclick="startTest('partner')" class="w-full bg-teal-600 text-white py-6 rounded-2xl text-xl font-bold hover:bg-teal-700 transition shadow-lg">
+                    我是伴侶 (Partner) 
+                    <span id="status-partner" class="block text-sm font-normal mt-1 text-teal-200">未完成</span>
+                </button>
+                <span id="update-time-partner" class="absolute -bottom-6 right-2 text-[10px] text-gray-400 font-medium"></span>
+            </div>
+        </div>
+        
+        <div id="analysis-btn-container" class="mt-16">
+            <button onclick="showResults()" class="bg-gray-800 text-white px-10 py-4 rounded-full text-lg font-bold hover:bg-black transition shadow-xl">
+                查看目前分析結果報告
+            </button>
+            <p id="analysis-hint" class="text-xs text-gray-400 mt-3 italic"></p>
+        </div>
+
+        <div class="mt-20 border-t pt-6">
+            <button onclick="resetData()" class="text-gray-300 hover:text-red-500 text-sm transition flex items-center mx-auto group">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1 group-hover:scale-110 transition" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />
+                </svg>
+                <span class="font-medium">重置所有測試數據與選項</span>
+            </button>
+        </div>
+    </div>
+
+    <!-- 測試頁面 -->
+    <div id="test-screen" class="hidden">
+        <div class="mb-6">
+            <button onclick="backToWelcome()" class="flex items-center text-gray-500 text-sm hover:text-indigo-600 transition font-bold">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" /></svg>
+                回到首頁選擇身分
+            </button>
+        </div>
+
+        <div class="mb-8 flex flex-col gap-4 bg-white p-6 rounded-2xl shadow-sm">
+            <div class="flex justify-between items-center">
+                <span id="role-indicator" class="font-bold text-indigo-700 text-lg">正在填寫...</span>
+                <span id="progress-text" class="text-sm font-bold text-indigo-600 bg-indigo-50 px-3 py-1 rounded-full">0 / 60</span>
+            </div>
+            <div class="w-full bg-gray-100 rounded-full h-3">
+                <div id="progress" class="progress-bar bg-indigo-500 h-3 rounded-full" style="width: 0%"></div>
+            </div>
+        </div>
+
+        <div id="question-container"></div>
+
+        <div class="mt-10 bg-white p-6 rounded-3xl shadow-lg">
+            <div class="flex flex-wrap justify-center gap-2 mb-6" id="pagination-dots"></div>
+            <div class="flex justify-between">
+                <button id="prev-btn" onclick="prevPage()" class="px-8 py-3 rounded-xl border border-gray-300 bg-white hover:bg-gray-50 disabled:opacity-30 font-medium transition">上一步</button>
+                <button id="next-btn" onclick="nextPage()" class="px-8 py-3 rounded-xl bg-indigo-600 text-white hover:bg-indigo-700 font-medium transition">下一組</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 結果頁面 -->
+    <div id="result-screen" class="hidden pb-20">
+        <div class="mb-6">
+            <button onclick="backToWelcome()" class="flex items-center text-indigo-600 font-bold hover:underline">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" /></svg>
+                返回主頁面
+            </button>
+        </div>
+
+        <div class="bg-white rounded-3xl shadow-xl p-8 mb-8 text-center">
+            <h2 class="text-3xl font-bold text-gray-900 mb-4">價值觀共識分析報告</h2>
+            <p id="result-summary" class="text-gray-600 mb-8">對比完成！以下是基於目前已填寫數據的分析。</p>
+            <div class="max-w-md mx-auto mb-10"><canvas id="radarChart"></canvas></div>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-center mb-8">
+                <div class="p-4 bg-green-50 rounded-2xl"><p class="text-sm text-green-700">契合度最高維度</p><p id="high-sync" class="text-2xl font-bold text-green-600">--</p></div>
+                <div class="p-4 bg-red-50 rounded-2xl"><p class="text-sm text-red-700">高度分歧題目</p><p id="low-sync" class="text-2xl font-bold text-red-600">--</p></div>
+                <div class="p-4 bg-indigo-50 rounded-2xl"><p class="text-sm text-indigo-700">整體平均差距</p><p id="avg-diff" class="text-2xl font-bold text-indigo-600">--</p></div>
+            </div>
+        </div>
+
+        <!-- 亮點區：大分歧 -->
+        <div id="diff-section" class="bg-white rounded-3xl shadow-xl p-8 mb-8">
+            <h3 class="text-xl font-bold mb-6 flex items-center">
+                <span class="bg-red-500 w-2 h-6 rounded-full mr-3"></span>重點討論區 (分歧 ≥ 2)
+            </h3>
+            <div id="diff-list" class="space-y-4"></div>
+        </div>
+
+        <!-- 全題目細節列表 -->
+        <div class="bg-white rounded-3xl shadow-xl p-8">
+            <h3 class="text-xl font-bold mb-6 flex items-center">
+                <span class="bg-indigo-500 w-2 h-6 rounded-full mr-3"></span>所有題目對比明細
+            </h3>
+            <div class="overflow-x-auto">
+                <table class="w-full text-left border-collapse">
+                    <thead>
+                        <tr class="text-gray-400 text-sm border-b">
+                            <th class="py-3 font-medium">題號</th>
+                            <th class="py-3 font-medium">題目內容</th>
+                            <th class="py-3 font-medium text-center">自己</th>
+                            <th class="py-3 font-medium text-center">伴侶</th>
+                            <th class="py-3 font-medium text-center">差距</th>
+                        </tr>
+                    </thead>
+                    <tbody id="full-detail-table" class="text-sm leading-relaxed">
+                        <!-- 由 JS 生成 -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    // --- 【1. 雲端配置區】 ---
+    // 請在此處貼上你從 Google Apps Script 部署得到的 URL
+    const GAS_URL = https://script.google.com/macros/s/AKfycbyNaF3r0eXLLwn9EdgJ0SYp-dnrYe8_wJjhnx91soppzR4B90ypesdmUNc8MOOcIPujzA/exec; 
+    
+    // 自動從網址取得房間 ID (例如: index.html?room=love123)，若無則預設為 'default'
+    const urlParams = new URLSearchParams(window.location.search);
+    const ROOM_ID = urlParams.get('room') || 'default';
+
+    // --- 【2. 原始數據區】 (保留你所有的 60 題) ---
+    const questions = [
+        { id: 1, text: "如果兩個人收入差很多，家庭開支應該按收入比例分擔。", cat: "財務" },
+        { id: 2, text: "結婚後每個人仍然應該保留自己的個人財務帳戶。", cat: "財務" },
+        { id: 3, text: "家庭的大額支出應該必須兩人同意。", cat: "財務" },
+        { id: 4, text: "如果一方收入很高，他／她承擔更多家庭開支是合理的。", cat: "財務" },
+        { id: 5, text: "如果一方暫時沒有收入，另一方完全負責家庭開支是正常的。", cat: "財務" },
+        { id: 6, text: "結婚後收入應該主要視為共同資產。", cat: "財務" },
+        { id: 7, text: "家務應該盡量平均分配。", cat: "家務" },
+        { id: 8, text: "如果一方收入明顯更高，另一方多做家務是合理的。", cat: "家務" },
+        { id: 9, text: "如果經濟允許，請家務幫手比自己分配家務更好。", cat: "家務" },
+        { id: 10, text: "家務的多少不應該用來衡量誰付出更多。", cat: "家務" },
+        { id: 11, text: "如果父母年老需要照顧，夫妻應共同承擔責任。", cat: "家庭" },
+        { id: 12, text: "如果父母需要，可以考慮一起住。", cat: "家庭" },
+        { id: 13, text: "婚後節日應盡量公平分配給兩邊家庭。", cat: "家庭" },
+        { id: 14, text: "父母不應該參與夫妻的重要決定。", cat: "家庭" },
+        { id: 15, text: "在婚姻中，配偶應該優先於父母。", cat: "家庭" },
+        { id: 16, text: "婚禮不應該為了面子花太多錢。", cat: "社交" },
+        { id: 17, text: "婚禮費用應該由雙方共同負責。", cat: "社交" },
+        { id: 18, text: "如果雙方家庭經濟差距大，婚禮支出不一定需要完全平均。", cat: "社交" },
+        { id: 19, text: "我希望婚後有孩子。", cat: "育兒" },
+        { id: 20, text: "如果另一半不想要孩子，我可以接受。", cat: "育兒" },
+        { id: 21, text: "如果有孩子，育兒責任應該盡量平均。", cat: "育兒" },
+        { id: 22, text: "如果需要，一方暫時把事業放慢來照顧孩子是合理的。", cat: "育兒" },
+        { id: 23, text: "父母應該為孩子的教育投入大量資源。", cat: "育兒" },
+        { id: 24, text: "婚後應該優先考慮買房。", cat: "事業" },
+        { id: 25, text: "如果生活壓力太大，租房生活也可以接受。", cat: "事業" },
+        { id: 26, text: "為了事業發展搬到另一個城市是合理的。", cat: "事業" },
+        { id: 27, text: "如果兩人的事業發展衝突，應該找到雙方都能接受的平衡。", cat: "事業" },
+        { id: 28, text: "家庭重大決定應該兩人共同決定。", cat: "事業" },
+        { id: 29, text: "婚姻中不應該存在固定的「男性角色」或「女性角色」。", cat: "角色" },
+        { id: 30, text: "即使追求平等，家庭中仍然可能自然形成某一方主導。", cat: "角色" },
+        { id: 31, text: "如果女性收入比男性高，家庭角色也可以相應調整。", cat: "角色" },
+        { id: 32, text: "男性在婚姻中承擔更多經濟責任是合理的。", cat: "角色" },
+        { id: 33, text: "女性在家庭生活中承擔更多照顧角色是自然的。", cat: "角色" },
+        { id: 34, text: "婚姻中每個人仍然需要一定的個人空間。", cat: "個人" },
+        { id: 35, text: "結婚後仍然應該保留自己的社交圈。", cat: "個人" },
+        { id: 36, text: "婚姻中偶爾吵架是正常的。", cat: "溝通" },
+        { id: 37, text: "吵架時有時候先冷靜比立刻解決更好。", cat: "溝通" },
+        { id: 38, text: "如果婚姻遇到困難，可以接受尋求婚姻諮詢。", cat: "溝通" },
+        { id: 39, text: "如果婚姻長期不幸福，離婚是可以理解的。", cat: "溝通" },
+        { id: 40, text: "在婚姻中，尊重比激情更重要。", cat: "溝通" },
+        { id: 41, text: "如果一方賺的錢明顯更多，他／她在家庭決策中有更大話語權。", cat: "財務" },
+        { id: 42, text: "如果女性收入比男性高，男性承擔更多家務是合理的。", cat: "家務" },
+        { id: 43, text: "在婚姻中完全追求絕對公平其實不太現實。", cat: "角色" },
+        { id: 44, text: "如果一方工作壓力非常大，另一方多承擔家庭責任是合理的。", cat: "家務" },
+        { id: 45, text: "如果家庭收入主要來自一方，他／她在生活方式上有更多決定權。", cat: "財務" },
+        { id: 46, text: "婚後雙方仍然應該有各自可以自由支配的大部分時間。", cat: "個人" },
+        { id: 47, text: "婚姻中不應該要求另一半完全改變生活習慣。", cat: "個人" },
+        { id: 48, text: "如果一方需要長時間照顧自己的父母，另一方應該支持。", cat: "家庭" },
+        { id: 49, text: "如果雙方家庭文化差異很大，夫妻應該建立自己的家庭規則。", cat: "家庭" },
+        { id: 50, text: "夫妻應該把自己的小家庭放在雙方原生家庭之前。", cat: "家庭" },
+        { id: 51, text: "如果孩子出生後家庭壓力很大，降低生活品質是可以接受的。", cat: "育兒" },
+        { id: 52, text: "如果一方想暫時離開職場照顧家庭，另一方應該支持。", cat: "育兒" },
+        { id: 53, text: "如果一方的事業機會非常好，另一方為家庭做出一定犧牲是合理的。", cat: "事業" },
+        { id: 54, text: "如果家庭財務出現困難，夫妻應該一起降低生活標準。", cat: "財務" },
+        { id: 55, text: "如果夫妻對某些價值觀始終無法一致，也可以在尊重下共存。", cat: "溝通" },
+        { id: 56, text: "婚姻中最重要的是彼此信任而不是控制。", cat: "個人" },
+        { id: 57, text: "即使結婚，個人成長仍然應該被鼓勵。", cat: "個人" },
+        { id: 58, text: "如果一方成功很多，另一方不應該因此感到壓力。", cat: "事業" },
+        { id: 59, text: "在婚姻中長期的穩定比短期的浪漫更重要。", cat: "溝通" },
+        { id: 60, text: "一段好的婚姻應該讓兩個人都變得更自由，而不是更受限制。", cat: "個人" }
+    ];
+
+    let currentRole = '';
+    let currentPage = 0;
+    const itemsPerPage = 6;
+    const totalPages = Math.ceil(questions.length / itemsPerPage);
+
+    // 初始化狀態
+    let responses = { user: {}, partner: {} };
+    let updateTimes = { user: '', partner: '' };
+
+    // --- 【3. 核心功能函數】 ---
+
+    // 初始化載入：同時嘗試讀取本地和雲端
+    async function init() {
+        console.log(`正在進入房間: ${ROOM_ID}`);
+        // 先顯示本地數據以便快速響應
+        responses.user = JSON.parse(localStorage.getItem('marriage_responses_user')) || {};
+        responses.partner = JSON.parse(localStorage.getItem('marriage_responses_partner')) || {};
+        updateTimes = JSON.parse(localStorage.getItem('marriage_update_times')) || { user: '', partner: '' };
+        updateWelcomeUI();
+        
+        // 接著異步從雲端同步最新數據
+        await loadFromCloud();
+    }
+
+    async function loadFromCloud() {
+        if (!GAS_URL || GAS_URL.includes('你的_GOOGLE')) return;
+        try {
+            const response = await fetch(`${GAS_URL}?room=${ROOM_ID}`);
+            const cloudData = await response.json();
+            if (cloudData) {
+                responses.user = cloudData.user || {};
+                responses.partner = cloudData.partner || {};
+                updateTimes.user = cloudData.times.user || '';
+                updateTimes.partner = cloudData.times.partner || '';
+                
+                // 同步回本地
+                localStorage.setItem('marriage_responses_user', JSON.stringify(responses.user));
+                localStorage.setItem('marriage_responses_partner', JSON.stringify(responses.partner));
+                localStorage.setItem('marriage_update_times', JSON.stringify(updateTimes));
+                
+                updateWelcomeUI();
+                console.log("雲端數據同步成功");
+            }
+        } catch (e) {
+            console.warn("雲端目前無紀錄或連接失敗");
+        }
+    }
+
+    async function syncToCloud() {
+        if (!GAS_URL || GAS_URL.includes('你的_GOOGLE')) return;
+        try {
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({
+                    room: ROOM_ID,
+                    role: currentRole,
+                    responses: responses[currentRole]
+                })
+            });
+        } catch (e) {
+            console.error("上傳失敗", e);
+        }
+    }
+
+    function formatDate(date) {
+        if (!date) return '';
+        const d = new Date(date);
+        return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+    }
+
+    function updateWelcomeUI() {
+        const uLen = Object.keys(responses.user).length;
+        const pLen = Object.keys(responses.partner).length;
+        
+        document.getElementById('status-user').innerText = uLen === 60 ? '已完成' : (uLen > 0 ? `完成度 ${Math.floor(uLen/60*100)}%` : '未完成');
+        document.getElementById('status-partner').innerText = pLen === 60 ? '已完成' : (pLen > 0 ? `完成度 ${Math.floor(pLen/60*100)}%` : '未完成');
+        
+        document.getElementById('update-time-user').innerText = updateTimes.user ? `最後更新: ${formatDate(updateTimes.user)}` : '';
+        document.getElementById('update-time-partner').innerText = updateTimes.partner ? `最後更新: ${formatDate(updateTimes.partner)}` : '';
+
+        const hint = document.getElementById('analysis-hint');
+        if (uLen === 60 && pLen === 60) {
+            hint.innerText = "雙方皆已完成，可以查看完整的對比報告。";
+        } else if (uLen > 0 || pLen > 0) {
+            hint.innerText = "已有部分填寫數據，可以查看目前進度的對比。";
+        } else {
+            hint.innerText = "請至少開始填寫後再查看結果。";
+        }
+    }
+
+    function startTest(role) {
+        currentRole = role;
+        currentPage = 0;
+        document.getElementById('welcome-screen').classList.add('hidden');
+        document.getElementById('test-screen').classList.remove('hidden');
+        document.getElementById('role-indicator').innerText = role === 'user' ? '填寫身分：自己 (User)' : '填寫身分：伴侶 (Partner)';
+        renderQuestions();
+    }
+
+    function backToWelcome() {
+        document.getElementById('test-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.add('hidden');
+        document.getElementById('welcome-screen').classList.remove('hidden');
+        updateWelcomeUI();
+    }
+
+    function goToPage(p) {
+        currentPage = p;
+        renderQuestions();
+    }
+
+    function renderPagination() {
+        const container = document.getElementById('pagination-dots');
+        container.innerHTML = '';
+        for (let i = 0; i < totalPages; i++) {
+            const btn = document.createElement('button');
+            btn.innerText = i + 1;
+            btn.className = `page-dot w-8 h-8 rounded-full border border-gray-300 flex items-center justify-center text-xs font-bold ${currentPage === i ? 'active' : 'bg-white text-gray-400 hover:border-indigo-400'}`;
+            btn.onclick = () => goToPage(i);
+            container.appendChild(btn);
+        }
+    }
+
+    function renderQuestions() {
+        const container = document.getElementById('question-container');
+        container.innerHTML = '';
+        const start = currentPage * itemsPerPage;
+        const currentQs = questions.slice(start, start + itemsPerPage);
+
+        currentQs.forEach((q) => {
+            const val = responses[currentRole][q.id];
+            const qDiv = document.createElement('div');
+            qDiv.className = "bg-white p-8 rounded-3xl shadow-sm mb-6 text-center border-b-4 border-gray-100 relative";
+            qDiv.innerHTML = `
+                <div class="absolute top-4 left-6 text-xs font-black text-gray-100 text-3xl">Q${q.id}</div>
+                <p class="text-xl font-medium mb-8 relative z-10 px-4">${q.text}</p>
+                <div class="flex items-center justify-between max-w-lg mx-auto">
+                    <span class="text-xs font-bold text-indigo-700 w-12">不同意</span>
+                    <div class="flex space-x-2 md:space-x-4 lg:space-x-6">
+                        ${[1,2,3,4,5].map(i => `
+                            <div onclick="selectOption(${q.id}, ${i})" 
+                                 class="option-dot w-8 h-8 md:w-12 md:h-12 rounded-full border-2 border-gray-200 flex items-center justify-center 
+                                 ${val === i ? 'active-' + i : 'bg-white'}" 
+                                 id="q-${q.id}-opt-${i}">
+                            </div>
+                        `).join('')}
+                    </div>
+                    <span class="text-xs font-bold text-teal-600 w-12 text-right">同意</span>
+                </div>
+            `;
+            container.appendChild(qDiv);
+        });
+
+        renderPagination();
+        updateProgress();
+        document.getElementById('prev-btn').disabled = currentPage === 0;
+        document.getElementById('next-btn').innerText = (currentPage + 1) >= totalPages ? "完成並返回" : "下一組";
+        window.scrollTo(0,0);
+    }
+
+    function selectOption(qId, val) {
+        responses[currentRole][qId] = val;
+        updateTimes[currentRole] = new Date().toISOString();
+        
+        localStorage.setItem(`marriage_responses_${currentRole}`, JSON.stringify(responses[currentRole]));
+        localStorage.setItem('marriage_update_times', JSON.stringify(updateTimes));
+        
+        // 更新 UI
+        for(let i=1; i<=5; i++) {
+            const el = document.getElementById(`q-${qId}-opt-${i}`);
+            if (el) {
+                el.className = `option-dot w-8 h-8 md:w-12 md:h-12 rounded-full border-2 border-gray-200 flex items-center justify-center bg-white`;
+                if(i === val) el.classList.add('active-' + i);
+            }
+        }
+        updateProgress();
+        
+        // 同步到雲端 (不阻塞)
+        syncToCloud();
+    }
+
+    function updateProgress() {
+        const answeredCount = Object.keys(responses[currentRole]).length;
+        document.getElementById('progress').style.width = `${(answeredCount / 60) * 100}%`;
+        document.getElementById('progress-text').innerText = `${answeredCount} / 60`;
+    }
+
+    function nextPage() {
+        if (currentPage + 1 < totalPages) {
+            currentPage++;
+            renderQuestions();
+        } else {
+            backToWelcome();
+        }
+    }
+
+    function prevPage() {
+        if (currentPage > 0) {
+            currentPage--;
+            renderQuestions();
+        }
+    }
+
+    // --- 【4. 報表與分析邏輯】 ---
+    let radarChartInstance = null;
+    function showResults() {
+        const uLen = Object.keys(responses.user).length;
+        const pLen = Object.keys(responses.partner).length;
+        if(uLen === 0 && pLen === 0) {
+            alert("目前還沒有任何填寫資料，請先開始測試。");
+            return;
+        }
+
+        document.getElementById('welcome-screen').classList.add('hidden');
+        document.getElementById('result-screen').classList.remove('hidden');
+        
+        const categories = ["財務", "家務", "家庭", "育兒", "事業", "溝通", "個人", "角色", "社交"];
+        const diffs = questions.map(q => {
+            const uVal = responses.user[q.id] || null;
+            const pVal = responses.partner[q.id] || null;
+            let diff = 0;
+            if(uVal !== null && pVal !== null) diff = Math.abs(uVal - pVal);
+            return { id: q.id, text: q.text, diff, u: uVal, p: pVal };
+        });
+        
+        const radarData = categories.map(cat => {
+            const catQs = questions.filter(q => q.cat === cat);
+            let validDiffCount = 0;
+            const sumDiff = catQs.reduce((acc, q) => {
+                const item = diffs.find(d => d.id === q.id);
+                if(item.u !== null && item.p !== null) {
+                    validDiffCount++;
+                    return acc + item.diff;
+                }
+                return acc;
+            }, 0);
+            return validDiffCount > 0 ? (sumDiff / validDiffCount).toFixed(1) : 0;
+        });
+
+        const ctx = document.getElementById('radarChart').getContext('2d');
+        if(radarChartInstance) radarChartInstance.destroy();
+        radarChartInstance = new Chart(ctx, {
+            type: 'radar',
+            data: { 
+                labels: categories, 
+                datasets: [{ 
+                    label: '分歧值 (越低代表越契合)', 
+                    data: radarData, 
+                    backgroundColor: 'rgba(99, 102, 241, 0.2)', 
+                    borderColor: 'rgb(99, 102, 241)', 
+                    pointBackgroundColor: 'rgb(99, 102, 241)' 
+                }] 
+            },
+            options: { scales: { r: { beginAtZero: true, max: 4, ticks: { display: false } } } }
+        });
+
+        const isBothFinished = (uLen === 60 && pLen === 60);
+        document.getElementById('result-summary').innerText = isBothFinished ? "對比完成！以下是基於 60 項指標的深度分析。" : "目前顯示的是已填寫部分的對比結果。";
+
+        const highDiffs = diffs.filter(d => d.u !== null && d.p !== null && d.diff >= 2).sort((a,b) => b.diff - a.diff);
+        
+        const validRadarData = radarData.filter((v, i) => {
+            const cat = categories[i];
+            const catQs = questions.filter(q => q.cat === cat);
+            return catQs.some(q => responses.user[q.id] !== undefined && responses.partner[q.id] !== undefined);
+        });
+        const minVal = validRadarData.length > 0 ? Math.min(...validRadarData) : 0;
+        const highSyncCat = categories[radarData.indexOf(minVal.toString())] || "--";
+
+        document.getElementById('high-sync').innerText = highSyncCat;
+        document.getElementById('low-sync').innerText = highDiffs.length + " 題";
+        
+        const totalDiffSum = diffs.reduce((a,b) => a + b.diff, 0);
+        const validPairs = diffs.filter(d => d.u !== null && d.p !== null).length;
+        document.getElementById('avg-diff').innerText = validPairs > 0 ? (totalDiffSum / validPairs).toFixed(2) : "--";
+
+        const listContainer = document.getElementById('diff-list');
+        const diffSection = document.getElementById('diff-section');
+        if (highDiffs.length > 0) {
+            diffSection.style.display = 'block';
+            listContainer.innerHTML = '';
+            highDiffs.forEach(d => {
+                const item = document.createElement('div');
+                item.className = "p-6 border border-gray-100 rounded-2xl bg-gray-50";
+                item.innerHTML = `
+                    <div class="flex justify-between items-start mb-2"><p class="font-medium text-gray-800 pr-4">Q${d.id}. ${d.text}</p><span class="bg-red-100 text-red-600 px-3 py-1 rounded-lg text-sm font-bold shrink-0">差距 ${d.diff}</span></div>
+                    <div class="flex items-center space-x-4 mt-4"><div class="flex-1 h-2 bg-gray-200 rounded-full relative"><div class="absolute w-4 h-4 rounded-full bg-indigo-600 top-1/2 -translate-y-1/2 border-2 border-white" style="left: ${(d.u-1)*25}%"></div><div class="absolute w-4 h-4 rounded-full bg-teal-600 top-1/2 -translate-y-1/2 border-2 border-white" style="left: ${(d.p-1)*25}%"></div></div></div>
+                    <div class="flex justify-between text-xs mt-2 text-gray-400 font-bold"><span>自己: ${d.u}</span><span>伴侶: ${d.p}</span></div>`;
+                listContainer.appendChild(item);
+            });
+        } else {
+            diffSection.style.display = 'none';
+        }
+
+        const tableBody = document.getElementById('full-detail-table');
+        tableBody.innerHTML = '';
+        diffs.forEach(d => {
+            const row = document.createElement('tr');
+            row.className = "border-b hover:bg-gray-50 transition";
+            const uDisplay = d.u === null ? '<span class="text-gray-300">-</span>' : d.u;
+            const pDisplay = d.p === null ? '<span class="text-gray-300">-</span>' : d.p;
+            const isDiffReady = (d.u !== null && d.p !== null);
+            const diffDisplay = !isDiffReady ? '<span class="text-gray-300">-</span>' : `<span class="${d.diff >= 2 ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-500'} px-2 py-0.5 rounded-full text-xs font-bold">${d.diff}</span>`;
+
+            row.innerHTML = `
+                <td class="py-4 text-gray-400 font-bold">Q${String(d.id).padStart(2,'0')}</td>
+                <td class="py-4 pr-2 text-gray-700 font-medium">${d.text}</td>
+                <td class="py-4 text-center font-bold text-indigo-600">${uDisplay}</td>
+                <td class="py-4 text-center font-bold text-teal-600">${pDisplay}</td>
+                <td class="py-4 text-center">${diffDisplay}</td>
+            `;
+            tableBody.appendChild(row);
+        });
+
+        window.scrollTo(0,0);
+    }
+
+    function resetData() {
+        if(confirm("警告：這將會徹底清除雲端與本地的所有填寫紀錄，確定要重置嗎？")) { 
+            localStorage.clear();
+            // 重置雲端 (傳送空數據)
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ room: ROOM_ID, role: 'user', responses: {} })
+            });
+            fetch(GAS_URL, {
+                method: 'POST',
+                body: JSON.stringify({ room: ROOM_ID, role: 'partner', responses: {} })
+            }).then(() => location.reload());
+        }
+    }
+
+    // --- 【啟動】 ---
+    init();
+
+</script>
+</body>
+</html>
